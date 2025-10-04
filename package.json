@@ -1,0 +1,30 @@
+{
+  "name": "task-management-frontend",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Modern Task Management System Frontend built with Vue.js 3",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "serve": "vite preview --port 3000",
+    "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs --fix --ignore-path .gitignore",
+    "format": "prettier --write src/"
+  },
+  "dependencies": {
+    "axios": "^1.4.0",
+    "moment": "^2.29.4",
+    "vee-validate": "^4.10.8",
+    "vue": "^3.3.4",
+    "vue-router": "^4.2.4",
+    "vuex": "^4.1.0",
+    "@fortawesome/fontawesome-free": "^6.4.2",
+    "vue-toastification": "^2.0.0-rc.5"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.2.1",
+    "sass": "^1.66.1",
+    "vite": "^6.0.5"
+  }
+}
