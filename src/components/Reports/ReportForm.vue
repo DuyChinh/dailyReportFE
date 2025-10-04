@@ -120,6 +120,7 @@
 <script>
 import { mapActions, mapGetters } from 'vuex';
 import TaskSearch from '../Tasks/TaskSearch.vue';
+import toastService from '../../services/toastService';
 
 export default {
   name: 'ReportForm',
@@ -301,14 +302,16 @@ export default {
         if (this.form.tags.length < 5) { // Limit to 5 tags
           this.form.tags.push(this.newTag.trim());
           this.newTag = '';
+          toastService.success('Thêm tag thành công!');
         } else {
-          alert('Maximum 5 tags allowed');
+          toastService.warning('Tối đa 5 tags được phép.');
         }
       }
     },
     
     removeTag(index) {
       this.form.tags.splice(index, 1);
+      toastService.info('Đã xóa tag.');
     },
     
     async handleSubmit() {
@@ -324,15 +327,18 @@ export default {
             reportId: this.reportId,
             reportData: formData
           });
+          toastService.success('Cập nhật báo cáo thành công!');
         } else {
           await this.createReport(formData);
+          toastService.success('Tạo báo cáo thành công!');
         }
         
         // Only emit the saved event, don't navigate
         // Let the parent component handle navigation
         this.$emit('saved');
       } catch (error) {
-        // Error is already handled in the store
+        // Show error toast
+        toastService.error('Lưu báo cáo thất bại. Vui lòng thử lại.');
         console.error('Error saving report:', error);
       }
     }

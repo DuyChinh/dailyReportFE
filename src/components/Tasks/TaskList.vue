@@ -130,6 +130,7 @@
 <script>
 import { mapGetters, mapActions } from 'vuex';
 import moment from 'moment';
+import toastService from '../../services/toastService';
 
 export default {
   name: 'TaskList',
@@ -206,10 +207,10 @@ export default {
     
     formatStatus(status) {
       const statusMap = {
-        pending: 'Pending',
-        in_progress: 'In Progress',
-        completed: 'Completed',
-        cancelled: 'Cancelled'
+        pending: 'Chờ xử lý',
+        in_progress: 'Đang thực hiện',
+        completed: 'Hoàn thành',
+        cancelled: 'Đã hủy'
       };
       return statusMap[status] || status;
     },
@@ -241,10 +242,11 @@ export default {
           taskId: task._id,
           updateData: { status: nextStatus }
         });
+        toastService.success(`Cập nhật trạng thái task thành công! (${this.formatStatus(nextStatus)})`);
         this.$emit('task-updated', task._id);
       } catch (error) {
         console.error('Error updating task status:', error);
-        this.$toast?.error('Failed to update task status');
+        toastService.error('Cập nhật trạng thái task thất bại. Vui lòng thử lại.');
       }
     },
     
@@ -257,10 +259,10 @@ export default {
         try {
           await this.deleteTask(task._id);
           this.$emit('task-deleted', task._id);
-          this.$toast?.success('Task deleted successfully');
+          toastService.success('Xóa task thành công!');
         } catch (error) {
           console.error('Error deleting task:', error);
-          this.$toast?.error('Failed to delete task');
+          toastService.error('Xóa task thất bại. Vui lòng thử lại.');
         }
       }
     }

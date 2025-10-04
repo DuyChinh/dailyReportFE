@@ -42,6 +42,7 @@
 
 <script>
 import { mapActions, mapGetters } from 'vuex';
+import toastService from '../../services/toastService';
 
 export default {
   name: 'LoginForm',
@@ -69,12 +70,17 @@ export default {
         await this.login(this.form);
         // Wait for the next tick to ensure the store is updated
         await this.$nextTick();
+        
+        // Show success toast
+        toastService.success('Đăng nhập thành công! Chào mừng bạn trở lại.');
+        
         // Small delay to ensure all components are properly updated
         setTimeout(() => {
           this.$router.push('/dashboard');
         }, 100);
       } catch (error) {
-        // Error is already handled in the store
+        // Show error toast
+        toastService.error('Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.');
         console.error('Login error:', error);
       }
     }

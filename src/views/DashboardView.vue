@@ -130,6 +130,7 @@
 import { mapActions, mapGetters } from 'vuex';
 import ReportsList from '../components/Reports/ReportsList.vue';
 import TaskList from '../components/Tasks/TaskList.vue';
+import toastService from '../services/toastService';
 
 export default {
   name: 'DashboardView',
@@ -182,6 +183,7 @@ export default {
         await this.loadTasks();
       } catch (error) {
         console.error('Error loading dashboard data:', error);
+        toastService.error('Không thể tải dữ liệu dashboard. Vui lòng thử lại.');
       }
     },
     

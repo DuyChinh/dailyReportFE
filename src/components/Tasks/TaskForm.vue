@@ -144,6 +144,7 @@
 
 <script>
 import { mapActions, mapGetters } from 'vuex';
+import toastService from '../../services/toastService';
 
 export default {
   name: 'TaskForm',
@@ -220,13 +221,16 @@ export default {
         
         if (this.isEditing) {
           await this.updateTask({ taskId: this.task._id, updateData: taskData });
+          toastService.success('Cập nhật task thành công!');
         } else {
           await this.createTask(taskData);
+          toastService.success('Tạo task thành công!');
         }
         
         this.$emit('saved');
         this.resetForm();
       } catch (error) {
+        toastService.error('Lưu task thất bại. Vui lòng thử lại.');
         console.error('Error saving task:', error);
       }
     },

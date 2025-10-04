@@ -18,6 +18,26 @@
             <i class="fas fa-plus"></i>
             Create Task
           </button>
+          
+          <!-- Toast Test Buttons -->
+          <div class="toast-test-buttons">
+            <button @click="testSuccessToast" class="btn btn-success btn-sm">
+              <i class="fas fa-check"></i>
+              Success
+            </button>
+            <button @click="testErrorToast" class="btn btn-danger btn-sm">
+              <i class="fas fa-times"></i>
+              Error
+            </button>
+            <button @click="testWarningToast" class="btn btn-warning btn-sm">
+              <i class="fas fa-exclamation"></i>
+              Warning
+            </button>
+            <button @click="testInfoToast" class="btn btn-info btn-sm">
+              <i class="fas fa-info"></i>
+              Info
+            </button>
+          </div>
         </div>
       </div>
 
@@ -258,6 +278,7 @@
 import { mapActions, mapGetters } from 'vuex';
 import TaskForm from '../components/Tasks/TaskForm.vue';
 import TaskList from '../components/Tasks/TaskList.vue';
+import toastService from '../services/toastService';
 
 export default {
   name: 'AdminView',
@@ -335,6 +356,23 @@ export default {
     ...mapActions('tasks', ['fetchTasks', 'createTask', 'updateTask', 'deleteTask', 'fetchTaskStats']),
     ...mapActions('users', ['fetchUsers']),
     
+    // Toast test methods
+    testSuccessToast() {
+      toastService.success('Operation completed successfully!');
+    },
+    
+    testErrorToast() {
+      toastService.error('Something went wrong. Please try again.');
+    },
+    
+    testWarningToast() {
+      toastService.warning('Please check your input before proceeding.');
+    },
+    
+    testInfoToast() {
+      toastService.info('Here is some useful information for you.');
+    },
+    
     async loadData() {
       try {
         await Promise.all([
@@ -366,6 +404,7 @@ export default {
     },
     
     handleTaskSaved() {
+      toastService.success('Tạo task thành công!');
       this.closeCreateTaskModal();
       this.refreshTasks();
     },
@@ -412,9 +451,11 @@ export default {
       if (confirm('Are you sure you want to delete this task?')) {
         try {
           await this.deleteTask(taskId);
+          toastService.success('Xóa task thành công!');
           await this.refreshTasks();
         } catch (error) {
           console.error('Error deleting task:', error);
+          toastService.error('Xóa task thất bại. Vui lòng thử lại.');
         }
       }
     },
@@ -443,10 +484,12 @@ export default {
           taskId: this.editingTask._id,
           updateData: this.editForm
         });
+        toastService.success('Cập nhật task thành công!');
         this.closeEditModal();
         await this.refreshTasks();
       } catch (error) {
         console.error('Error updating task:', error);
+        toastService.error('Cập nhật task thất bại. Vui lòng thử lại.');
       } finally {
         this.submitting = false;
       }
@@ -1157,6 +1200,54 @@ export default {
   
   .modal-actions {
     flex-direction: column;
+  }
+}
+
+/* Toast Test Buttons */
+.toast-test-buttons {
+  display: flex;
+  gap: 8px;
+  margin-left: 16px;
+  flex-wrap: wrap;
+}
+
+.toast-test-buttons .btn {
+  margin: 0;
+}
+
+.btn-info {
+  color: #fff;
+  background: linear-gradient(135deg, #17a2b8 0%, #6f42c1 100%);
+  border-color: #17a2b8;
+  box-shadow: 0 4px 15px rgba(23, 162, 184, 0.3);
+}
+
+.btn-info:hover {
+  background: linear-gradient(135deg, #138496 0%, #5a32a3 100%);
+  border-color: #138496;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(23, 162, 184, 0.4);
+}
+
+.btn-warning {
+  color: #212529;
+  background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+  border-color: #ffc107;
+  box-shadow: 0 4px 15px rgba(255, 193, 7, 0.3);
+}
+
+.btn-warning:hover {
+  background: linear-gradient(135deg, #e0a800 0%, #e55a00 100%);
+  border-color: #e0a800;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(255, 193, 7, 0.4);
+}
+
+@media (max-width: 768px) {
+  .toast-test-buttons {
+    margin-left: 0;
+    margin-top: 12px;
+    justify-content: center;
   }
 }
 </style>

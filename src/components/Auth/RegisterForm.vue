@@ -68,6 +68,7 @@
 
 <script>
 import { mapActions, mapGetters } from 'vuex';
+import toastService from '../../services/toastService';
 
 export default {
   name: 'RegisterForm',
@@ -100,6 +101,7 @@ export default {
       // Check if passwords match
       if (this.form.password !== this.form.confirmPassword) {
         this.validationError = 'Passwords do not match';
+        toastService.warning('Mật khẩu xác nhận không khớp. Vui lòng kiểm tra lại.');
         return;
       }
       
@@ -110,12 +112,17 @@ export default {
         await this.register(userData);
         // Wait for the next tick to ensure the store is updated
         await this.$nextTick();
+        
+        // Show success toast
+        toastService.success('Đăng ký thành công! Chào mừng bạn đến với hệ thống.');
+        
         // Small delay to ensure all components are properly updated
         setTimeout(() => {
           this.$router.push('/dashboard');
         }, 100);
       } catch (error) {
-        // Error is handled in the store
+        // Show error toast
+        toastService.error('Đăng ký thất bại. Vui lòng thử lại sau.');
         console.error('Registration error:', error);
       }
     }

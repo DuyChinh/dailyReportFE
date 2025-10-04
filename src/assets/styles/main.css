@@ -253,3 +253,80 @@ h4 {
     display: none;
   }
 }
+
+/* Custom Toast Styles */
+.Vue-Toastification__toast {
+  border-radius: 12px !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12) !important;
+  backdrop-filter: blur(10px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+}
+
+.Vue-Toastification__toast--success {
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important;
+  color: white !important;
+}
+
+.Vue-Toastification__toast--error {
+  background: linear-gradient(135deg, #dc3545 0%, #c82333 100%) !important;
+  color: white !important;
+}
+
+.Vue-Toastification__toast--warning {
+  background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%) !important;
+  color: #212529 !important;
+}
+
+.Vue-Toastification__toast--info {
+  background: linear-gradient(135deg, #17a2b8 0%, #6f42c1 100%) !important;
+  color: white !important;
+}
+
+.Vue-Toastification__toast--default {
+  background: linear-gradient(135deg, #6c757d 0%, #495057 100%) !important;
+  color: white !important;
+}
+
+.Vue-Toastification__toast-body {
+  font-weight: 500 !important;
+  font-size: 14px !important;
+  line-height: 1.4 !important;
+}
+
+.Vue-Toastification__close-button {
+  color: inherit !important;
+  opacity: 0.8 !important;
+  font-size: 18px !important;
+  font-weight: bold !important;
+}
+
+.Vue-Toastification__close-button:hover {
+  opacity: 1 !important;
+}
+
+.Vue-Toastification__progress-bar {
+  background: rgba(255, 255, 255, 0.3) !important;
+  height: 3px !important;
+}
+
+.Vue-Toastification__icon {
+  margin-right: 12px !important;
+}
+
+/* Toast container positioning */
+.Vue-Toastification__container {
+  z-index: 9999 !important;
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 768px) {
+  .Vue-Toastification__toast {
+    margin: 8px !important;
+    border-radius: 8px !important;
+  }
+  
+  .Vue-Toastification__toast-body {
+    font-size: 13px !important;
+  }
+}

@@ -1,4 +1,5 @@
 import axios from 'axios';
+import toastService from './toastService';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
@@ -18,6 +19,25 @@ api.interceptors.request.use(config => {
   }
   return config;
 });
+
+// Add response interceptor for error handling
+api.interceptors.response.use(
+  response => response,
+  error => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('token');
+      toastService.error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+      window.location.href = '/login';
+    } else if (error.response?.status === 403) {
+      toastService.error('Bạn không có quyền thực hiện hành động này.');
+    } else if (error.response?.status >= 500) {
+      toastService.error('Lỗi máy chủ. Vui lòng thử lại sau.');
+    } else if (error.code === 'NETWORK_ERROR') {
+      toastService.error('Lỗi kết nối mạng. Vui lòng kiểm tra kết nối internet.');
+    }
+    return Promise.reject(error);
+  }
+);
 
 export default {
   /**
