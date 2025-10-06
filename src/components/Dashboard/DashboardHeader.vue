@@ -93,11 +93,7 @@ export default {
       
       // Then try localStorage
       try {
-        const userStr = localStorage.getItem('user');
-        if (userStr) {
-          this.localUserData = JSON.parse(userStr);
-          return;
-        }
+        this.localUserData = JSON.parse(localStorage.getItem('user'))?.user || null;    
       } catch (e) {
         console.error('Error parsing user data', e);
       }

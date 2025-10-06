@@ -1,6 +1,46 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import store from '../store';
 
+function isUserAdmin() {
+  try {
+    // First, check the dedicated isAdmin flag
+    if (localStorage.getItem('isAdmin') === 'true') {
+      console.log('Router guard: User is admin (from isAdmin flag)');
+      return true;
+    }
+    
+    // Otherwise, check from the user object
+    const userStr = localStorage.getItem('user');
+    if (!userStr) {
+      console.log('Router guard: No user in localStorage');
+      return false;
+    }
+    
+    const user = JSON.parse(userStr);
+    console.log('Router guard: User from localStorage:', user);
+    
+    // Check different possible structures
+    let role;
+    if (user.user && user.user.role) {
+      role = user.user.role;
+    } else if (user.role) {
+      role = user.role;
+    }
+    
+    console.log('Router guard: Role found:', role);
+    
+    if (role === 'admin') {
+      localStorage.setItem('isAdmin', 'true');
+      return true;
+    }
+    
+    return false;
+  } catch (e) {
+    console.error('Router guard: Error checking admin status', e);
+    return false;
+  }
+}
+
 const routes = [
   {
     path: '/',
@@ -55,6 +95,12 @@ const routes = [
     meta: { requiresAuth: true }
   },
   {
+    path: '/tasks/:id',
+    name: 'task-detail',
+    component: () => import('../views/TaskDetailView.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
     path: '/admin',
     name: 'admin',
     component: () => import('../views/AdminView.vue'),
@@ -83,7 +129,7 @@ router.beforeEach(async (to, from, next) => {
     next('/login');
   } else if (to.matched.some(record => record.meta.requiresGuest) && isAuthenticated) {
     next('/dashboard');
-  } else if (to.matched.some(record => record.meta.requiresAdmin) && !isAdmin) {
+  } else if (to.matched.some(record => record.meta.requiresAdmin) && !isUserAdmin()) {
     next('/dashboard');
   } else {
     next();

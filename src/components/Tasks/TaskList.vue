@@ -121,6 +121,13 @@
               </small>
             </div>
           </div>
+          
+          <div class="task-actions">
+            <router-link class="btn btn-sm" :to="{ name: 'task-detail', params: { id: task._id } }">
+              <i class="fas fa-eye"></i>
+              View
+            </router-link>
+          </div>
         </div>
       </div>
     </div>
@@ -438,6 +445,8 @@ export default {
 }
 
 .task-actions {
+  margin-top: 10px;
+  float: right;
   display: flex;
   gap: 6px;
 }

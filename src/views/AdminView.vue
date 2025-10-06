@@ -48,7 +48,7 @@
             <i class="fas fa-tasks"></i>
           </div>
           <div class="stat-content">
-            <h3 class="stat-number">{{ stats.total || 0 }}</h3>
+            <h3 class="stat-number">{{ taskStats.total || 0 }}</h3>
             <p class="stat-label">Total Tasks</p>
           </div>
         </div>
@@ -58,7 +58,7 @@
             <i class="fas fa-users"></i>
           </div>
           <div class="stat-content">
-            <h3 class="stat-number">{{ users.length || 0 }}</h3>
+            <h3 class="stat-number">{{ usersCount }}</h3>
             <p class="stat-label">Users</p>
           </div>
         </div>
@@ -68,7 +68,7 @@
             <i class="fas fa-check-circle"></i>
           </div>
           <div class="stat-content">
-            <h3 class="stat-number">{{ stats.completed || 0 }}</h3>
+            <h3 class="stat-number">{{ taskStats.completed || 0 }}</h3>
             <p class="stat-label">Completed</p>
           </div>
         </div>
@@ -78,7 +78,7 @@
             <i class="fas fa-clock"></i>
           </div>
           <div class="stat-content">
-            <h3 class="stat-number">{{ stats.pending || 0 }}</h3>
+            <h3 class="stat-number">{{ taskStats.pending || 0 }}</h3>
             <p class="stat-label">Pending</p>
           </div>
         </div>
@@ -302,7 +302,8 @@ export default {
       submitting: false,
       editingTask: null,
       editForm: {},
-      users: [],
+      // Fallback list used only if API fails to fetch users
+      localUsers: [],
       newTask: {
         title: '',
         description: '',
@@ -318,7 +319,49 @@ export default {
   
   computed: {
     ...mapGetters('tasks', ['tasks', 'loading', 'stats']),
-    ...mapGetters('users', ['users']),
+    ...mapGetters('users', { usersList: 'users' }),
+    
+    usersCount() {
+      return (this.usersList && this.usersList.length) || this.localUsers.length || 0;
+    },
+    
+    taskStats() {
+      const counts = {
+        total: 0,
+        pending: 0,
+        in_progress: 0,
+        completed: 0,
+        cancelled: 0
+      };
+      
+      // Prefer server stats when present and non-zero
+      if (this.stats && (
+        this.stats.total ||
+        this.stats.pending ||
+        this.stats.in_progress ||
+        this.stats.completed ||
+        this.stats.cancelled
+      )) {
+        return {
+          total: this.stats.total || 0,
+          pending: this.stats.pending || 0,
+          in_progress: this.stats.in_progress || 0,
+          completed: this.stats.completed || 0,
+          cancelled: this.stats.cancelled || 0
+        };
+      }
+      
+      // Fallback: compute from tasks list
+      const list = Array.isArray(this.tasks) ? this.tasks : [];
+      counts.total = list.length;
+      
+      list.forEach(t => {
+        if (!t || !t.status) return;
+        if (counts[t.status] !== undefined) counts[t.status]++;
+      });
+      
+      return counts;
+    },
     
     filteredTasks() {
       let filtered = [...this.tasks];
@@ -380,6 +423,9 @@ export default {
           this.fetchTaskStats(),
           this.loadUsers()
         ]);
+        
+        console.log("Task stats loaded:", this.stats);
+        console.log("Computed taskStats:", this.taskStats);
       } catch (error) {
         console.error('Error loading admin data:', error);
       }
@@ -391,7 +437,7 @@ export default {
       } catch (error) {
         console.error('Error loading users:', error);
         // Fallback to mock data if API fails
-        this.users = [
+        this.localUsers = [
           { _id: '1', name: 'John Doe', email: 'john@example.com', role: 'user' },
           { _id: '2', name: 'Jane Smith', email: 'jane@example.com', role: 'user' },
           { _id: '3', name: 'Bob Johnson', email: 'bob@example.com', role: 'user' }

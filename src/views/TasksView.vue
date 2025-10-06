@@ -28,7 +28,7 @@
             <i class="fas fa-list"></i>
           </div>
           <div class="stat-content">
-            <h3 class="stat-number">{{ stats.total || 0 }}</h3>
+            <h3 class="stat-number">{{ taskStats.total }}</h3>
             <p class="stat-label">Total Tasks</p>
           </div>
         </div>
@@ -38,7 +38,7 @@
             <i class="fas fa-clock"></i>
           </div>
           <div class="stat-content">
-            <h3 class="stat-number">{{ stats.pending || 0 }}</h3>
+            <h3 class="stat-number">{{ taskStats.pending }}</h3>
             <p class="stat-label">Pending</p>
           </div>
         </div>
@@ -48,7 +48,7 @@
             <i class="fas fa-play"></i>
           </div>
           <div class="stat-content">
-            <h3 class="stat-number">{{ stats.in_progress || 0 }}</h3>
+            <h3 class="stat-number">{{ taskStats.in_progress }}</h3>
             <p class="stat-label">In Progress</p>
           </div>
         </div>
@@ -58,7 +58,7 @@
             <i class="fas fa-check-circle"></i>
           </div>
           <div class="stat-content">
-            <h3 class="stat-number">{{ stats.completed || 0 }}</h3>
+            <h3 class="stat-number">{{ taskStats.completed }}</h3>
             <p class="stat-label">Completed</p>
           </div>
         </div>
@@ -146,6 +146,40 @@ export default {
   
   computed: {
     ...mapGetters('tasks', ['myTasks', 'loading', 'stats']),
+    
+    taskStats() {
+      const counts = {
+        total: 0,
+        pending: 0,
+        in_progress: 0,
+        completed: 0,
+        cancelled: 0
+      };
+      // Prefer server stats when present and non-zero
+      if (this.stats && (
+        this.stats.total ||
+        this.stats.pending ||
+        this.stats.in_progress ||
+        this.stats.completed ||
+        this.stats.cancelled
+      )) {
+        return {
+          total: this.stats.total || 0,
+          pending: this.stats.pending || 0,
+          in_progress: this.stats.in_progress || 0,
+          completed: this.stats.completed || 0,
+          cancelled: this.stats.cancelled || 0
+        };
+      }
+      // Fallback: compute from myTasks
+      const list = Array.isArray(this.myTasks) ? this.myTasks : [];
+      counts.total = list.length;
+      list.forEach(t => {
+        if (!t || !t.status) return;
+        if (counts[t.status] !== undefined) counts[t.status]++;
+      });
+      return counts;
+    },
     
     filteredTasks() {
       let filtered = [...this.myTasks];

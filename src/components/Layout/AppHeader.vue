@@ -1,5 +1,5 @@
 <template>
-  <header class="app-header" v-if="isAuthenticated">
+  <header class="app-header" v-if="isUserAuthenticated">
     <div class="container">
       <div class="header-content">
         <div class="logo-section">
@@ -22,20 +22,20 @@
             <i class="fas fa-list-check"></i>
             <span>My Tasks</span>
           </router-link>
-          <router-link v-if="isAdmin" to="/admin" class="nav-link" @click="closeMobileMenu">
+          <router-link v-if="isUserAdmin" to="/admin" class="nav-link" @click="closeMobileMenu">
             <i class="fas fa-cog"></i>
             <span>Admin</span>
           </router-link>
         </nav>
         
         <div class="user-actions">
-          <div class="user-info" v-if="currentUser">
+          <div class="user-info" v-if="userData">
             <div class="user-avatar">
               <i class="fas fa-user"></i>
             </div>
             <div class="user-details">
-              <span class="user-name">{{ currentUser.name }}</span>
-              <span class="user-role">{{ isAdmin ? 'Admin' : 'User' }}</span>
+              <span class="user-name">{{ userData.name }}</span>
+              <span class="user-role">{{ isUserAdmin ? 'Admin' : 'User' }}</span>
             </div>
           </div>
           
@@ -88,16 +88,189 @@ export default {
     return {
       isMobileMenuOpen: false,
       isUserMenuOpen: false,
-      notificationCount: 0
+      notificationCount: 0,
+      userData: null,
+      intervalId: null
     };
+  },
+
+  created() {
+    // Try to initialize auth state from various sources
+    this.loadUserData();
+    
+    // Set up interval to periodically check localStorage for changes
+    this.intervalId = setInterval(() => {
+      this.checkLocalStorage();
+    }, 2000);
+  },
+
+  beforeUnmount() {
+    // Clean up interval when component is unmounted
+    if (this.intervalId) {
+      clearInterval(this.intervalId);
+    }
   },
   
   computed: {
-    ...mapGetters('auth', ['currentUser', 'isAdmin', 'isAuthenticated'])
+    ...mapGetters('auth', ['currentUser', 'isAdmin', 'isAuthenticated']),
+    
+    // Enhanced computed properties that work even on reload
+    isUserAdmin() {
+      // First check our local data
+      if (this.userData && typeof this.userData.role === 'string') {
+        const isAdmin = this.userData.role === 'admin';
+        console.log('Admin check from userData:', isAdmin);
+        if (isAdmin) {
+          localStorage.setItem('isAdmin', 'true');
+          return true;
+        }
+      }
+      
+      // Then check Vuex store
+      if (this.isAdmin) {
+        console.log('Admin check from Vuex:', true);
+        localStorage.setItem('isAdmin', 'true');
+        return true;
+      }
+      
+      // Finally check localStorage directly with more reliable parsing
+      try {
+        const userStr = localStorage.getItem('user');
+        if (!userStr) {
+          console.log('No user in localStorage');
+          localStorage.removeItem('isAdmin');
+          return false;
+        }
+        
+        const user = JSON.parse(userStr);
+        console.log('User from localStorage:', user);
+        
+        // Try different possible structures of user data in localStorage
+        let role;
+        if (user.user && user.user.role) {
+          role = user.user.role;
+        } else if (user.role) {
+          role = user.role;
+        }
+        
+        console.log('Role found:', role);
+        
+        // Store this role in localStorage for router guards to use
+        if (role === 'admin') {
+          // Set a dedicated admin flag in localStorage that router guards can check
+          localStorage.setItem('isAdmin', 'true');
+          return true;
+        } else {
+          localStorage.removeItem('isAdmin');
+          return false;
+        }
+      } catch (e) {
+        console.error('Error checking admin status from localStorage', e);
+        localStorage.removeItem('isAdmin');
+        return false;
+      }
+    },
+    
+    isUserAuthenticated() {
+      // First check if we have local user data
+      if (this.userData) {
+        return true;
+      }
+      
+      // Then check Vuex store
+      if (this.isAuthenticated) {
+        return true;
+      }
+      
+      // Finally check localStorage directly
+      try {
+        const user = localStorage.getItem('user');
+        return !!user;
+      } catch (e) {
+        console.error('Error checking auth status from localStorage', e);
+        return false;
+      }
+    }
   },
   
   methods: {
-    ...mapActions('auth', ['logout']),
+    ...mapActions('auth', ['logout', 'initializeFromStorage']),
+    
+    loadUserData() {
+      // Try to get user data from Vuex store first
+      if (this.currentUser) {
+        this.userData = {...this.currentUser};
+        
+        // Update admin status in localStorage for router guards
+        if (this.currentUser.role === 'admin') {
+          console.log('Setting isAdmin from currentUser');
+          localStorage.setItem('isAdmin', 'true');
+        } else {
+          localStorage.removeItem('isAdmin');
+        }
+        return;
+      }
+      
+      // Then try localStorage
+      try {
+        const userStr = localStorage.getItem('user');
+        if (userStr) {
+          const parsedData = JSON.parse(userStr);
+          this.userData = parsedData.user || parsedData;
+          
+          // Update admin status in localStorage
+          const role = this.userData.role;
+          console.log('Role from localStorage:', role);
+          
+          if (role === 'admin') {
+            console.log('Setting isAdmin from localStorage');
+            localStorage.setItem('isAdmin', 'true');
+          }
+        }
+      } catch (e) {
+        console.error('Error parsing user data from localStorage', e);
+      }
+      
+      // Try to initialize the store from storage
+      this.initializeFromStorage();
+      
+      // After store initialization, check if we have user data now
+      this.$nextTick(() => {
+        if (this.currentUser && !this.userData) {
+          this.userData = {...this.currentUser};
+        }
+      });
+    },
+    
+    checkLocalStorage() {
+      // Periodically check localStorage for changes
+      try {
+        const userStr = localStorage.getItem('user');
+        if (userStr) {
+          const parsedData = JSON.parse(userStr);
+          const user = parsedData.user || parsedData;
+          
+          // Update our local user data if it's different
+          if (JSON.stringify(user) !== JSON.stringify(this.userData)) {
+            this.userData = user;
+            
+            // Update admin status in localStorage
+            if (user.role === 'admin') {
+              localStorage.setItem('isAdmin', 'true');
+            } else {
+              localStorage.removeItem('isAdmin');
+            }
+          }
+        } else if (this.userData) {
+          // If localStorage has no user but we have userData, user might have logged out in another tab
+          this.userData = null;
+          // Try to synchronize with the store
+          this.initializeFromStorage();
+        }
+      } catch (e) {
+        console.error('Error checking localStorage for user data', e);
+      }
+    },
     
     toggleMobileMenu() {
       this.isMobileMenuOpen = !this.isMobileMenuOpen;
@@ -125,10 +298,23 @@ export default {
     async handleLogout() {
       try {
         await this.logout();
+        this.userData = null;
         this.$router.push('/login');
       } catch (error) {
         console.error('Logout failed:', error);
       }
+    }
+  },
+  
+  watch: {
+    // Watch for changes in the Vuex store currentUser
+    currentUser: {
+      handler(newUser) {
+        if (newUser && (!this.userData || JSON.stringify(newUser) !== JSON.stringify(this.userData))) {
+          this.userData = {...newUser};
+        }
+      },
+      immediate: true
     }
   },
   
