@@ -95,7 +95,7 @@
           <div class="card-header">
             <h3 class="card-title">
               <i class="fas fa-tasks"></i>
-              My Tasks
+              Today's Tasks
             </h3>
             <router-link to="/tasks" class="card-action">
               View All <i class="fas fa-arrow-right"></i>
@@ -104,15 +104,35 @@
           <div class="card-content">
             <div v-if="!taskLoading" class="task-list">
               <div v-if="myTasks && myTasks.length > 0" class="tasks">
-                <task-list 
-                  :tasks="myTasks.slice(0, 5)"
-                  :show-admin-actions="false"
-                  @task-updated="handleTaskUpdated"
-                />
+                <div v-for="task in recentTasks" :key="task._id" class="task-item">
+                  <div class="task-info">
+                    <h4 class="task-title">{{ task.title }}</h4>
+                    <p class="task-description" v-if="task.description">
+                      {{ task.description.length > 100 ? task.description.substring(0, 100) + '...' : task.description }}
+                    </p>
+                    <div class="task-meta">
+                      <span class="task-priority" :class="task.priority?.toLowerCase()">
+                        {{ task.priority || 'Medium' }}
+                      </span>
+                      <span class="task-due-date" v-if="task.dueDate">
+                        <i class="fas fa-calendar"></i>
+                        {{ formatDate(task.dueDate) }}
+                      </span>
+                    </div>
+                  </div>
+                  <div class="task-status">
+                    <span class="status-badge" :class="task.status">
+                      {{ task.status }}
+                    </span>
+                  </div>
+                </div>
               </div>
               <div v-else class="empty-state">
                 <i class="fas fa-tasks"></i>
-                <p>No tasks assigned yet</p>
+                <p>No tasks scheduled for today</p>
+                <router-link to="/tasks" class="btn btn-primary mt-3">
+                  View All Tasks
+                </router-link>
               </div>
             </div>
             <div v-else class="loading-state">
@@ -131,6 +151,7 @@ import { mapActions, mapGetters } from 'vuex';
 import ReportsList from '../components/Reports/ReportsList.vue';
 import TaskList from '../components/Tasks/TaskList.vue';
 import toastService from '../services/toastService';
+import moment from 'moment';
 
 export default {
   name: 'DashboardView',
@@ -148,7 +169,6 @@ export default {
         completedTasks: 0,
         pendingTasks: 0
       },
-      tasks: [],
       taskLoading: false
     };
   },
@@ -156,7 +176,35 @@ export default {
   computed: {
     ...mapGetters('auth', ['currentUser']),
     ...mapGetters('reports', ['allReports', 'loading', 'error']),
-    ...mapGetters('tasks', ['myTasks', 'stats'])
+    ...mapGetters('tasks', ['myTasks', 'stats', 'loading']),
+    
+    // Updated to show only today's tasks
+    recentTasks() {
+      if (!this.myTasks || !Array.isArray(this.myTasks)) return [];
+      
+      // Get today's date as YYYY-MM-DD
+      const today = moment().format('YYYY-MM-DD');
+      
+      // Filter tasks to only include today's tasks
+      const todayTasks = this.myTasks.filter(task => {
+        // Check due date first
+        if (task.dueDate) {
+          const dueDate = moment(task.dueDate).format('YYYY-MM-DD');
+          return dueDate === today;
+        }
+        // If no due date, check created date
+        else if (task.createdAt) {
+          const createdDate = moment(task.createdAt).format('YYYY-MM-DD');
+          return createdDate === today;
+        }
+        return false;
+      });
+      
+      console.log(`Found ${todayTasks.length} tasks for today`);
+      
+      // Limit to 5 tasks
+      return todayTasks.slice(0, 5);
+    }
   },
   
   async created() {
@@ -169,14 +217,16 @@ export default {
     
     async loadDashboardData() {
       try {
+        console.log("Loading dashboard data...");
         // Make sure we reset or initialize data properly
         this.stats = {
           totalReports: 0,
-          drafts: 0,
-          submitted: 0,
-          approved: 0,
-          rejected: 0
+          totalTasks: 0,
+          completedTasks: 0,
+          pendingTasks: 0
         };
+        
+        this.taskLoading = true;
         
         // Explicitly fetch reports with appropriate filters for the dashboard
         await this.setFilters({
@@ -189,14 +239,20 @@ export default {
         
         await Promise.all([
           this.fetchReports(),
-          this.loadTasks()
+          this.fetchMyTasks(),
+          this.fetchTaskStats()
         ]);
         
         console.log('Reports data loaded:', this.allReports);
+        console.log('Tasks data loaded:', this.myTasks);
+        
         this.calculateStats();
+        this.updateTaskStats();
       } catch (error) {
         console.error('Error loading dashboard data:', error);
         toastService.error('Không thể tải dữ liệu dashboard. Vui lòng thử lại.');
+      } finally {
+        this.taskLoading = false;
       }
     },
     
@@ -229,30 +285,33 @@ export default {
       });
     },
     
-    async loadTasks() {
-      try {
-        // Initialize tasks with safe defaults
-        this.tasks = {
-          recent: [],
-          upcoming: [],
-          completed: []
-        };
+    updateTaskStats() {
+      if (this.myTasks && Array.isArray(this.myTasks)) {
+        // Get today's date as YYYY-MM-DD
+        const today = moment().format('YYYY-MM-DD');
         
-        // Mock tasks for now - in a real app you'd fetch from API
-        this.tasks = {
-          recent: [
-            { _id: '1', title: 'Implement search feature', status: 'in-progress', dueDate: '2023-08-30' },
-            { _id: '2', title: 'Fix UI bugs', status: 'open', dueDate: '2023-09-02' }
-          ],
-          upcoming: [
-            { _id: '3', title: 'Write documentation', status: 'open', dueDate: '2023-09-05' }
-          ],
-          completed: [
-            { _id: '4', title: 'Performance optimization', status: 'completed', dueDate: '2023-08-25' }
-          ]
-        };
-      } catch (error) {
-        console.error('Error loading tasks:', error);
+        // Filter tasks to only include today's tasks
+        const todayTasks = this.myTasks.filter(task => {
+          if (task.dueDate) {
+            const dueDate = moment(task.dueDate).format('YYYY-MM-DD');
+            return dueDate === today;
+          } else if (task.createdAt) {
+            const createdDate = moment(task.createdAt).format('YYYY-MM-DD');
+            return createdDate === today;
+          }
+          return false;
+        });
+        
+        // Update stats with today's tasks
+        this.stats.totalTasks = todayTasks.length;
+        this.stats.completedTasks = todayTasks.filter(task => task.status === 'completed').length;
+        this.stats.pendingTasks = todayTasks.filter(task => task.status === 'pending').length;
+        
+        console.log('Today\'s task stats calculated:', {
+          total: this.stats.totalTasks,
+          completed: this.stats.completedTasks,
+          pending: this.stats.pendingTasks
+        });
       }
     },
     
@@ -268,7 +327,8 @@ export default {
     
     handleTaskUpdated(taskId) {
       // Reload tasks when a task is updated
-      this.loadTasks();
+      this.fetchMyTasks();
+      this.fetchTaskStats();
     }
   }
 };
