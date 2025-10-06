@@ -111,9 +111,14 @@
           
           <div class="filter-group">
             <label for="assigned-filter">Assigned To</label>
-            <select id="assigned-filter" v-model="filters.assignedTo" @change="applyFilters" class="filter-select">
+            <select 
+              id="assigned-filter" 
+              v-model="filters.assignedTo" 
+              @change="applyFilters" 
+              class="filter-select"
+            >
               <option value="">All Users</option>
-              <option v-for="user in users" :key="user._id" :value="user._id">
+              <option v-for="user in availableUsers" :key="user._id" :value="user._id">
                 {{ user.name }}
               </option>
             </select>
@@ -153,6 +158,7 @@
           <task-list 
             :tasks="filteredTasks"
             :show-admin-actions="true"
+            :user-filter="filters.assignedTo"
             @task-updated="handleTaskUpdated"
             @edit-task="handleEditTask"
             @task-deleted="handleTaskDeleted"
@@ -321,6 +327,13 @@ export default {
     ...mapGetters('tasks', ['tasks', 'loading', 'stats']),
     ...mapGetters('users', { usersList: 'users' }),
     
+    availableUsers() {
+      // Make sure we have a valid list of users for the filter dropdown
+      return this.usersList && this.usersList.length 
+        ? this.usersList 
+        : this.localUsers;
+    },
+    
     usersCount() {
       return (this.usersList && this.usersList.length) || this.localUsers.length || 0;
     },
@@ -446,7 +459,20 @@ export default {
     },
     
     async refreshTasks() {
-      await this.loadData();
+      try {
+        this.loading = true;
+        await this.fetchTasks({
+          status: this.filters.status || undefined,
+          priority: this.filters.priority || undefined,
+          assignedTo: this.filters.assignedTo || undefined,
+          search: this.filters.search || undefined
+        });
+      } catch (error) {
+        console.error('Error refreshing tasks:', error);
+        toastService.error('Failed to refresh tasks');
+      } finally {
+        this.loading = false;
+      }
     },
     
     handleTaskSaved() {
@@ -468,7 +494,8 @@ export default {
     },
     
     applyFilters() {
-      // Filters are applied reactively through computed property
+      // When filters change, we'll fetch tasks with the new filter values
+      this.refreshTasks();
     },
     
     async createTask() {

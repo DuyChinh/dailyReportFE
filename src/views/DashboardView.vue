@@ -6,7 +6,7 @@
         <div class="welcome-content">
           <div class="welcome-text">
             <h1 class="welcome-title">
-              Welcome back, {{ currentUser?.name || 'User' }}! 👋
+              Welcome back! 👋
             </h1>
             <p class="welcome-subtitle">
               Here's what's happening with your tasks and reports today.
@@ -178,9 +178,22 @@ export default {
           rejected: 0
         };
         
-        await this.fetchReports();
+        // Explicitly fetch reports with appropriate filters for the dashboard
+        await this.setFilters({
+          page: 1,
+          limit: 10,
+          status: '',
+          category: '',
+          search: ''
+        });
+        
+        await Promise.all([
+          this.fetchReports(),
+          this.loadTasks()
+        ]);
+        
+        console.log('Reports data loaded:', this.allReports);
         this.calculateStats();
-        await this.loadTasks();
       } catch (error) {
         console.error('Error loading dashboard data:', error);
         toastService.error('Không thể tải dữ liệu dashboard. Vui lòng thử lại.');

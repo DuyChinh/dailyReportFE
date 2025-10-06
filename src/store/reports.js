@@ -6,6 +6,13 @@ const getTodayDate = () => {
   return today.toISOString().split('T')[0];
 };
 
+// Helper to get tomorrow's date in YYYY-MM-DD format
+const getTomorrowDate = () => {
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  return tomorrow.toISOString().split('T')[0];
+};
+
 export default {
   namespaced: true,
   
@@ -21,7 +28,7 @@ export default {
       status: '',
       category: '',
       startDate: getTodayDate(), // Set today as default start date
-      endDate: getTodayDate(),   // Set today as default end date
+      endDate: getTodayDate(),   // Set tomorrow as default end date
       search: ''
     }
   },
@@ -63,7 +70,7 @@ export default {
         status: '',
         category: '',
         startDate: getTodayDate(), // Reset to today
-        endDate: getTodayDate(),   // Reset to today
+        endDate: getTomorrowDate(),   // Reset to tomorrow
         search: ''
       };
     },

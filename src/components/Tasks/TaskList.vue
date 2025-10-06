@@ -102,6 +102,12 @@
                 <i class="fas fa-tag"></i>
                 <span>{{ task.category }}</span>
               </div>
+              
+              <!-- Add assigned user information -->
+              <div class="meta-item" v-if="task.assignedTo">
+                <i class="fas fa-user"></i>
+                <span>{{ getAssignedUserName(task.assignedTo) }}</span>
+              </div>
             </div>
           </div>
           
@@ -150,6 +156,10 @@ export default {
     showAdminActions: {
       type: Boolean,
       default: false
+    },
+    userFilter: {
+      type: String,
+      default: ''
     }
   },
   
@@ -163,6 +173,7 @@ export default {
   
   computed: {
     ...mapGetters('auth', ['isAdmin']),
+    ...mapGetters('users', ['users']),
     
     filteredTasks() {
       let filtered = [...this.tasks];
@@ -191,6 +202,15 @@ export default {
         filtered = filtered.filter(task => task.status === this.statusFilter);
       }
       
+      // User filter (from parent component - Admin)
+      if (this.userFilter) {
+        filtered = filtered.filter(task => {
+          // Handle different ways assignedTo might be stored
+          const taskUserId = task.assignedTo?._id || task.assignedTo;
+          return taskUserId === this.userFilter;
+        });
+      }
+      
       // Sort by updatedAt (most recent first)
       return filtered.sort((a, b) => {
         const dateA = new Date(a.updatedAt || a.createdAt || 0);
@@ -202,6 +222,23 @@ export default {
   
   methods: {
     ...mapActions('tasks', ['updateTask', 'deleteTask']),
+    
+    // Helper method to get user name from ID or user object
+    getAssignedUserName(assignedTo) {
+      // If assignedTo is already a user object with name
+      if (assignedTo && typeof assignedTo === 'object' && assignedTo.name) {
+        return assignedTo.name;
+      }
+      
+      // If assignedTo is just an ID, find the user in our users list
+      if (assignedTo && typeof assignedTo === 'string') {
+        const userId = assignedTo;
+        const user = this.users?.find(u => u._id === userId);
+        if (user) return user.name;
+      }
+      
+      return 'Unassigned';
+    },
     
     toggleTodayFilter() {
       this.showTodayOnly = !this.showTodayOnly;
@@ -613,5 +650,10 @@ export default {
   .task-actions {
     justify-content: flex-end;
   }
+}
+
+/* Add styles for assigned user */
+.meta-item i.fa-user {
+  color: #6f42c1;
 }
 </style>
