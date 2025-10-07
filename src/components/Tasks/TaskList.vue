@@ -62,7 +62,7 @@
                 <i :class="getStatusIcon(task.status)"></i>
               </button>
               <button 
-                v-if="isAdmin"
+                v-if="shouldShowAdminActions"
                 class="action-btn edit"
                 @click="editTask(task)"
                 title="Edit Task"
@@ -70,7 +70,7 @@
                 <i class="fas fa-edit"></i>
               </button>
               <button 
-                v-if="isAdmin"
+                v-if="shouldShowAdminActions"
                 class="action-btn delete"
                 @click="handleDeleteTask(task)"
                 title="Delete Task"
@@ -172,8 +172,14 @@ export default {
   },
   
   computed: {
-    ...mapGetters('auth', ['isAdmin']),
+    ...mapGetters('auth', ['isAdmin', 'currentUser']),
     ...mapGetters('users', ['users']),
+    
+    shouldShowAdminActions() {
+      // Force show admin actions if showAdminActions prop is true
+      // or if user is admin
+      return this.showAdminActions || this.isAdmin;
+    },
     
     filteredTasks() {
       let filtered = [...this.tasks];
@@ -220,6 +226,13 @@ export default {
     }
   },
   
+  mounted() {
+    console.log('TaskList mounted - Current user:', this.currentUser);
+    console.log('TaskList mounted - Is admin:', this.isAdmin);
+    console.log('TaskList mounted - Show admin actions prop:', this.showAdminActions);
+    console.log('TaskList mounted - Should show admin actions:', this.shouldShowAdminActions);
+  },
+
   methods: {
     ...mapActions('tasks', ['updateTask', 'deleteTask']),
     

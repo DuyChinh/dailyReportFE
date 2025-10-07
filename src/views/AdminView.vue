@@ -541,22 +541,37 @@ export default {
     handleEditTask(task) {
       this.editingTask = task;
       this.editForm = {
-        title: task.title,
-        description: task.description,
-        priority: task.priority,
-        status: task.status,
+        title: task.title || '',
+        description: task.description || '',
+        priority: task.priority || 'medium',
+        status: task.status || 'pending',
         dueDate: task.dueDate ? task.dueDate.split('T')[0] : '',
-        category: task.category
+        category: task.category || ''
       };
     },
     
     async handleTaskUpdate() {
       this.submitting = true;
       try {
+        // Prepare clean update data
+        const updateData = {
+          title: this.editForm.title.trim(),
+          description: this.editForm.description.trim(),
+          priority: this.editForm.priority,
+          status: this.editForm.status,
+          category: this.editForm.category.trim()
+        };
+        
+        // Only include dueDate if it has a value
+        if (this.editForm.dueDate) {
+          updateData.dueDate = this.editForm.dueDate;
+        }
+        
         await this.updateTask({
           taskId: this.editingTask._id,
-          updateData: this.editForm
+          updateData
         });
+        
         toastService.success('Cập nhật task thành công!');
         this.closeEditModal();
         await this.refreshTasks();
