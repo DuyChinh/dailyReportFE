@@ -7,7 +7,7 @@
             <i class="fas fa-tasks"></i>
             {{ task?.title || 'Task Detail' }}
           </h1>
-          <p class="subtitle" v-if="task?.description">{{ task.description }}</p>
+          <div class="subtitle" v-if="task?.description" v-html="formatDescription(task.description)"></div>
         </div>
 
         <div class="actions">
@@ -56,7 +56,7 @@
 
           <div class="description" v-if="task.description">
             <h3><i class="fas fa-align-left"></i> Description</h3>
-            <p>{{ task.description }}</p>
+            <div class="description-content" v-html="formatDescription(task.description)"></div>
           </div>
 
           <div v-if="editing" class="edit-panel">
@@ -68,7 +68,7 @@
               </div>
               <div class="form-row">
                 <label>Description</label>
-                <textarea v-model="form.description" rows="4" />
+                <textarea v-model="form.description" rows="6" class="description-textarea" placeholder="Enter task description with line breaks..." />
               </div>
               <div class="form-row grid">
                 <div>
@@ -170,6 +170,14 @@ export default {
       const map = { pending: 'Chờ xử lý', in_progress: 'Đang thực hiện', completed: 'Hoàn thành', cancelled: 'Đã hủy' };
       return map[s] || s;
     },
+    formatDescription(description) {
+      if (!description) return '';
+      // Convert line breaks to <br> tags and preserve formatting
+      return description
+        .replace(/\n/g, '<br>')
+        .replace(/\r\n/g, '<br>')
+        .replace(/\r/g, '<br>');
+    },
     async save() {
       try {
         const payload = { ...this.form };
@@ -219,7 +227,8 @@ export default {
 .details li { display: flex; align-items: center; gap: 8px; color: #6c757d; font-size: 14px; }
 .description { margin-top: 20px; }
 .description h3 { margin: 0 0 8px 0; font-size: 16px; color: #2c3e50; }
-.description p { margin: 0; color: #495057; line-height: 1.6; }
+.description-content { margin: 0; color: #495057; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word; min-height: 20px; }
+.subtitle { margin: 6px 0 0 36px; color: #6c757d; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word; }
 .edit-panel { margin-top: 24px; padding-top: 16px; border-top: 1px solid #edf2f7; }
 .form-row { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
 .form-row.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }

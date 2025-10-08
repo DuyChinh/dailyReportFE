@@ -214,8 +214,9 @@
               <textarea 
                 id="edit-description"
                 v-model="editForm.description"
-                class="form-control"
-                rows="3"
+                class="form-control description-textarea"
+                rows="5"
+                placeholder="Enter task description with line breaks..."
               ></textarea>
             </div>
             
@@ -1329,6 +1330,14 @@ export default {
   border-color: #e0a800;
   transform: translateY(-2px);
   box-shadow: 0 8px 25px rgba(255, 193, 7, 0.4);
+}
+
+/* Description textarea styling */
+.description-textarea {
+  min-height: 120px;
+  resize: vertical;
+  font-family: inherit;
+  line-height: 1.6;
 }
 
 @media (max-width: 768px) {

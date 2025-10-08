@@ -81,9 +81,8 @@
           </div>
           
           <div class="task-content">
-            <p class="task-description" v-if="task.description">
-              {{ task.description }}
-            </p>
+            <div class="task-description" v-if="task.description" v-html="formatDescription(task.description)">
+            </div>
             
             <div class="task-meta">
               <div class="meta-item">
@@ -309,6 +308,15 @@ export default {
     
     editTask(task) {
       this.$emit('edit-task', task);
+    },
+    
+    formatDescription(description) {
+      if (!description) return '';
+      // Convert line breaks to <br> tags and preserve formatting
+      return description
+        .replace(/\n/g, '<br>')
+        .replace(/\r\n/g, '<br>')
+        .replace(/\r/g, '<br>');
     },
     
     async handleDeleteTask(task) {
@@ -550,7 +558,12 @@ export default {
   margin: 0 0 12px 0;
   color: #6c757d;
   font-size: 14px;
-  line-height: 1.5;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  min-height: 20px;
+  max-height: 120px;
+  overflow-y: auto;
 }
 
 .task-meta {

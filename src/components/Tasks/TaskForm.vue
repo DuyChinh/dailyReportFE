@@ -24,11 +24,11 @@
         <textarea
           id="task-description"
           v-model="form.description"
-          class="form-control"
-          rows="4"
+          class="form-control description-textarea"
+          rows="6"
           required
           maxlength="500"
-          placeholder="Describe the task in detail"
+          placeholder="Describe the task in detail with line breaks..."
         ></textarea>
         <small>{{ form.description?.length || 0 }}/500 characters</small>
       </div>
@@ -314,6 +314,13 @@ export default {
 .form-control:focus {
   border-color: #667eea;
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.description-textarea {
+  min-height: 120px;
+  resize: vertical;
+  font-family: inherit;
+  line-height: 1.6;
 }
 
 .form-group small {
